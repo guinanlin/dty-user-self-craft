@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
       message,
       chatId,
       projectId,
-      modelId = 'v0-1.5-md',
+      modelId = 'v0-1.5-sm',
       imageGenerations = false,
       thinking = false,
       attachments = [],
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     } else {
       // Create new chat
       response = await v0.chats.create({
-        system: 'v0 MUST always generate code even if the user just says "hi" or asks a question. v0 MUST NOT ask the user to clarify their request.',
+        system: 'v0 MUST always generate code even if the user just says "hi" or asks a question. v0 MUST NOT ask the user to clarify their request. Generate simple HTML with Tailwind CSS instead of complex React components for faster generation.',
         message: message.trim(),
         modelConfiguration: {
           modelId: modelId,

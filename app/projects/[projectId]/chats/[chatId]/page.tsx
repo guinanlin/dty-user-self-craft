@@ -17,6 +17,7 @@ export default function ChatPage() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [generatedApp, setGeneratedApp] = useState<string | null>(null)
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [chatData, setChatData] = useState<any>(null)
   const [projectChats, setProjectChats] = useState<any[]>([])
@@ -272,6 +273,36 @@ export default function ChatPage() {
           setGeneratedApp(data.demo)
         } else if (data.url) {
           setGeneratedApp(data.url)
+        } else if (data.files && data.files.length > 0) {
+          // Check if we have HTML files and create a preview
+          const htmlFiles = data.files.filter((file: any) => 
+            file.meta?.file?.endsWith('.html') || 
+            file.source?.includes('<!DOCTYPE html>') ||
+            file.source?.includes('<html>')
+          )
+          
+          if (htmlFiles.length > 0) {
+            // Use the first HTML file for preview
+            const htmlContent = htmlFiles[0].source
+            setGeneratedApp(htmlContent)
+          }
+        }
+
+        // Load the generated code if available
+        if (data.files && data.files.length > 0) {
+          // Combine all file sources into one code block
+          const allCode = data.files.map((file: any) => 
+            `// ${file.meta?.file || 'file'}\n${file.source}\n`
+          ).join('\n')
+          setGeneratedCode(allCode)
+        } else if (data.text) {
+          setGeneratedCode(data.text)
+        } else if (data.code) {
+          setGeneratedCode(data.code)
+        } else if (data.html) {
+          setGeneratedCode(data.html)
+        } else if (data.content) {
+          setGeneratedCode(data.content)
         }
       }
     } catch (err) {
@@ -331,6 +362,23 @@ export default function ChatPage() {
       const data = await response.json()
       setChatData(data)
 
+      // Store the generated code if available
+      if (data.files && data.files.length > 0) {
+        // Combine all file sources into one code block
+        const allCode = data.files.map((file: any) => 
+          `// ${file.meta?.file || 'file'}\n${file.source}\n`
+        ).join('\n')
+        setGeneratedCode(allCode)
+      } else if (data.text) {
+        setGeneratedCode(data.text)
+      } else if (data.code) {
+        setGeneratedCode(data.code)
+      } else if (data.html) {
+        setGeneratedCode(data.html)
+      } else if (data.content) {
+        setGeneratedCode(data.content)
+      }
+
       // If this was a new chat, redirect to the actual chat ID within the project
       if (
         (selectedChatId === 'new' || selectedProjectId === 'new') &&
@@ -347,6 +395,46 @@ export default function ChatPage() {
         setGeneratedApp(data.demo)
       } else if (data.url) {
         setGeneratedApp(data.url)
+      } else if (data.files && data.files.length > 0) {
+        // Check if we have HTML files and create a preview
+        const htmlFiles = data.files.filter((file: any) => 
+          file.meta?.file?.endsWith('.html') || 
+          file.source?.includes('<!DOCTYPE html>') ||
+          file.source?.includes('<html>')
+        )
+        
+        if (htmlFiles.length > 0) {
+          // Use the first HTML file for preview
+          const htmlContent = htmlFiles[0].source
+          setGeneratedApp(htmlContent)
+        } else {
+          // Fallback: show a message with link
+          const fallbackPreview = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <script src="https://cdn.tailwindcss.com"></script>
+            </head>
+            <body class="p-8 bg-gray-50 flex items-center justify-center min-h-dvh">
+              <div class="max-w-md mx-auto text-center">
+                <div class="text-4xl mb-4">✨</div>
+                <h1 class="text-xl font-semibold mb-4">App Generated Successfully!</h1>
+                <p class="text-gray-600 mb-4">${data.text || 'Your app has been created.'}</p>
+                ${
+                  data.url
+                    ? `
+                  <a href="${data.url}" target="_blank" class="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+                    View on v0.dev
+                  </a>
+                `
+                    : ''
+                }
+              </div>
+            </body>
+            </html>
+          `
+          setGeneratedApp(fallbackPreview)
+        }
       } else {
         // Fallback: show a message with link
         const fallbackPreview = `
@@ -394,23 +482,32 @@ export default function ChatPage() {
 
   return (
     <div className="relative min-h-dvh bg-background">
-      {/* Preview Area */}
+      {/* Preview and Code Area */}
       <div className="absolute inset-0 overflow-hidden">
         {generatedApp ? (
-          <div className="w-full h-full bg-white">
+          <div className="w-full h-full bg-white flex">
             {/* Preview container */}
-            {generatedApp.startsWith('http') ? (
-              <iframe
-                src={generatedApp}
-                className="w-full h-full border-0"
-                sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups allow-top-navigation-by-user-activation allow-pointer-lock"
-              />
-            ) : (
-              <iframe
-                srcDoc={generatedApp}
-                className="w-full h-full border-0"
-                sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-pointer-lock"
-              />
+            <div className="flex-1">
+              {generatedApp.startsWith('http') ? (
+                <iframe
+                  src={generatedApp}
+                  className="w-full h-full border-0"
+                  sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups allow-top-navigation-by-user-activation allow-pointer-lock"
+                />
+              ) : (
+                <iframe
+                  srcDoc={generatedApp}
+                  className="w-full h-full border-0"
+                  sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-pointer-lock"
+                />
+              )}
+            </div>
+            
+            {/* Code display */}
+            {generatedCode && (
+              <div className="w-1/2 bg-gray-900 text-green-400 p-4 overflow-auto">
+                <pre className="text-sm whitespace-pre-wrap">{generatedCode}</pre>
+              </div>
             )}
           </div>
         ) : null}

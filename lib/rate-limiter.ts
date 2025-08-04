@@ -4,7 +4,9 @@ import { Redis } from '@upstash/redis'
 // Check if Upstash credentials are available
 const upstashUrl = process.env.KV_REST_API_URL
 const upstashToken = process.env.KV_REST_API_TOKEN
-const isRateLimitingEnabled = upstashUrl && upstashToken && upstashUrl.trim() !== '' && upstashToken.trim() !== ''
+const isRateLimitingEnabled = upstashUrl && upstashToken && 
+  upstashUrl.trim() !== '' && upstashToken.trim() !== '' &&
+  upstashUrl !== 'your_upstash_redis_rest_url' && upstashToken !== 'your_upstash_redis_rest_token'
 
 // Create Redis instance and rate limiter only if credentials are available
 let generationRateLimit: Ratelimit | null = null
